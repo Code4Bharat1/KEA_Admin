@@ -1,8 +1,8 @@
 'use client';
 
 import React from 'react';
+import MemberDetails from '@/app/components/member/memberdetails/MemberDetails';
 
-import MemberDetails from '../../../components/member/memberdetails/Memberdetails';
 
 export default function MemberDetailPage({ params }) {
   const { memberId } = params;
