@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { 
+import {
   MessageSquare,
   Search,
   Filter,
@@ -48,11 +48,12 @@ export default function AdminFeedback() {
   useEffect(() => {
     fetchUserData();
     fetchFeedbacks();
-  }, [selectedStatus, selectedCategory, currentPage]);
+  }, [selectedStatus, selectedCategory, currentPage, searchQuery]);
+
 
   const fetchUserData = async () => {
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('admintoken');
       const res = await axios.get(`${API_URL}/users/me`, {
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -67,13 +68,16 @@ export default function AdminFeedback() {
   const fetchFeedbacks = async () => {
     setLoading(true);
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('admintoken');
+
       const params = new URLSearchParams();
-      
+
       if (selectedStatus) params.append('status', selectedStatus);
       if (selectedCategory) params.append('category', selectedCategory);
+      if (searchQuery) params.append('search', searchQuery); // ✅ ADD THIS
       params.append('page', currentPage);
       params.append('limit', 20);
+
 
       const { data } = await axios.get(`${API_URL}/admin/feedback?${params.toString()}`, {
         headers: { Authorization: `Bearer ${token}` }
@@ -91,10 +95,11 @@ export default function AdminFeedback() {
 
   const handleUpdateStatus = async (id, status) => {
     try {
-      const token = localStorage.getItem('token');
-      await axios.put(`${API_URL}/admin/feedback/${id}`, 
+     const token = localStorage.getItem('admintoken');
+
+      await axios.put(`${API_URL}/admin/feedback/${id}`,
         { status, response: adminResponse },
-        { headers: { Authorization: `Bearer ${token}` }}
+        { headers: { Authorization: `Bearer ${token}` } }
       );
       alert(`Feedback status updated to ${status}!`);
       setAdminResponse('');
@@ -109,7 +114,8 @@ export default function AdminFeedback() {
     if (!confirm('Delete this feedback permanently?')) return;
 
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('admintoken');
+
       await axios.delete(`${API_URL}/admin/feedback/${id}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -123,7 +129,8 @@ export default function AdminFeedback() {
 
   const openDetail = async (feedback) => {
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('admintoken');
+
       const { data } = await axios.get(`${API_URL}/admin/feedback/${feedback._id}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -247,11 +254,10 @@ export default function AdminFeedback() {
                       {[...Array(5)].map((_, i) => (
                         <Star
                           key={i}
-                          className={`w-5 h-5 ${
-                            i < selectedFeedback.rating
-                              ? 'fill-yellow-400 text-yellow-400'
-                              : 'text-gray-300'
-                          }`}
+                          className={`w-5 h-5 ${i < selectedFeedback.rating
+                            ? 'fill-yellow-400 text-yellow-400'
+                            : 'text-gray-300'
+                            }`}
                         />
                       ))}
                       <span className="text-sm text-gray-600 ml-2">({selectedFeedback.rating}/5)</span>
@@ -398,10 +404,11 @@ export default function AdminFeedback() {
                             </h3>
                             <span className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(feedback.status)}`}>
                               {getStatusIcon(feedback.status)}
-                              <span className="capitalize">{feedback.status}</span>
+                              <span className="capitalize">{feedback.status.replace('-', ' ')}</span>
+
                             </span>
                           </div>
-                          
+
                           <div className="flex flex-wrap items-center gap-3 text-sm text-gray-600 mb-3">
                             <span className="px-2 py-1 bg-purple-100 text-purple-800 rounded text-xs font-medium">
                               {feedback.category}
@@ -450,16 +457,15 @@ export default function AdminFeedback() {
                     >
                       Previous
                     </button>
-                    
+
                     {[...Array(Math.min(7, totalPages))].map((_, i) => (
                       <button
                         key={i}
                         onClick={() => setCurrentPage(i + 1)}
-                        className={`w-10 h-10 rounded-lg ${
-                          currentPage === i + 1
-                            ? 'bg-blue-600 text-white'
-                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                        }`}
+                        className={`w-10 h-10 rounded-lg ${currentPage === i + 1
+                          ? 'bg-blue-600 text-white'
+                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                          }`}
                       >
                         {i + 1}
                       </button>

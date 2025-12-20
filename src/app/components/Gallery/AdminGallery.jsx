@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { 
   Image as ImageIcon,
   Search,
@@ -16,13 +17,11 @@ import {
   Tag
 } from 'lucide-react';
 import axios from 'axios';
-// import AdminSidebar from '../layout/sidebar';
-// import AdminNavbar from '../layout/header';
 
 export default function AdminGallery() {
+  const router = useRouter();
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [items, setItems] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState('All photos');
   const [searchQuery, setSearchQuery] = useState('');
@@ -30,9 +29,10 @@ export default function AdminGallery() {
   const [totalPages, setTotalPages] = useState(1);
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [selectedItem, setSelectedItem] = useState(null);
-  const [filterStatus, setFilterStatus] = useState('all'); // all, approved, pending
+  const [filterStatus, setFilterStatus] = useState('all');
 
-  const API_URL = process.env.NEXT_PUBLIC_API_URL;
+  // Fallback URL agar env variable nahi mila
+  const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:7101/api';
 
   const categories = [
     'All photos',
@@ -42,52 +42,105 @@ export default function AdminGallery() {
     'Good Wishes'
   ];
 
+  // Check if token exists
+  const checkAuth = () => {
+    // Try both token keys - adminToken and token
+    const token = localStorage.getItem('adminToken') || localStorage.getItem('token');
+    if (!token) {
+      alert('Session expired. Please login again.');
+      router.push('/');
+      return false;
+    }
+    return true;
+  };
+
   useEffect(() => {
-    fetchUserData();
-    fetchGallery();
+    if (checkAuth()) {
+      fetchUserData();
+    }
+  }, []);
+
+  useEffect(() => {
+    if (checkAuth()) {
+      fetchGallery();
+    }
   }, [selectedCategory, searchQuery, currentPage, filterStatus]);
 
   const fetchUserData = async () => {
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('adminToken') || localStorage.getItem('token');
       const res = await axios.get(`${API_URL}/users/me`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       setUser(res.data);
     } catch (err) {
       console.error('Error fetching user:', err);
-    } finally {
-      setLoading(false);
+      if (err.response?.status === 401) {
+        localStorage.removeItem('adminToken');
+        localStorage.removeItem('token');
+        alert('Session expired. Please login again.');
+        router.push('/');
+      }
     }
   };
 
   const fetchGallery = async () => {
     setLoading(true);
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('adminToken') || localStorage.getItem('token');
+      
+      if (!token) {
+        router.push('/');
+        return;
+      }
+
       const params = new URLSearchParams();
       
-      if (selectedCategory !== 'All photos') params.append('category', selectedCategory);
-      if (searchQuery) params.append('search', searchQuery);
+      if (selectedCategory !== 'All photos') {
+        params.append('category', selectedCategory);
+      }
+      if (searchQuery) {
+        params.append('search', searchQuery);
+      }
+      
+      // Backend ko status filter bhejo
+      if (filterStatus !== 'all') {
+        params.append('status', filterStatus);
+      }
+      
       params.append('page', currentPage);
       params.append('limit', 12);
 
-      const { data } = await axios.get(`${API_URL}/admin/gallery?${params.toString()}`, {
+      const url = `${API_URL}/admin/gallery?${params.toString()}`;
+      // console.log('🔍 Fetching gallery from:', url);
+      // console.log('🔑 Token:', token ? token.substring(0, 20) + '...' : 'NO TOKEN');
+
+      const { data } = await axios.get(url, {
         headers: { Authorization: `Bearer ${token}` }
       });
 
-      let filteredItems = data.items || [];
-      
-      if (filterStatus === 'approved') {
-        filteredItems = filteredItems.filter(item => item.isApproved);
-      } else if (filterStatus === 'pending') {
-        filteredItems = filteredItems.filter(item => !item.isApproved);
-      }
+      // console.log('✅ Gallery data received:', {
+      //   items: data.items?.length,
+      //   total: data.pagination?.total,
+      //   rawData: data
+      // });
 
-      setItems(filteredItems);
+      setItems(data.items || []);
       setTotalPages(data.pagination?.pages || 1);
+      
     } catch (error) {
-      console.error('Error fetching gallery:', error);
+      console.error('❌ Error fetching gallery:', error);
+      
+      if (error.response?.status === 401) {
+        localStorage.removeItem('adminToken');
+        localStorage.removeItem('token');
+        alert('Session expired. Please login again.');
+        router.push('/');
+      } else if (error.response?.status === 429) {
+        alert('Too many requests. Please wait a moment.');
+      } else {
+        alert('Failed to fetch gallery items');
+      }
       setItems([]);
     } finally {
       setLoading(false);
@@ -98,7 +151,7 @@ export default function AdminGallery() {
     if (!confirm('Approve this gallery item?')) return;
 
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('adminToken') || localStorage.getItem('token');
       await axios.post(`${API_URL}/admin/gallery/${id}/approve`, {}, {
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -106,7 +159,14 @@ export default function AdminGallery() {
       fetchGallery();
       setShowDetailModal(false);
     } catch (error) {
-      alert('Failed to approve item');
+      console.error('Error approving:', error);
+      if (error.response?.status === 401) {
+        localStorage.removeItem('adminToken');
+        localStorage.removeItem('token');
+        router.push('/');
+      } else {
+        alert('Failed to approve item');
+      }
     }
   };
 
@@ -114,7 +174,7 @@ export default function AdminGallery() {
     if (!confirm('Reject and delete this gallery item? This action cannot be undone.')) return;
 
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('adminToken') || localStorage.getItem('token');
       await axios.post(`${API_URL}/admin/gallery/${id}/reject`, {}, {
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -122,7 +182,14 @@ export default function AdminGallery() {
       fetchGallery();
       setShowDetailModal(false);
     } catch (error) {
-      alert('Failed to reject item');
+      console.error('Error rejecting:', error);
+      if (error.response?.status === 401) {
+        localStorage.removeItem('adminToken');
+        localStorage.removeItem('token');
+        router.push('/');
+      } else {
+        alert('Failed to reject item');
+      }
     }
   };
 
@@ -130,7 +197,7 @@ export default function AdminGallery() {
     if (!confirm('Delete this gallery item permanently?')) return;
 
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('adminToken') || localStorage.getItem('token');
       await axios.delete(`${API_URL}/admin/gallery/${id}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -138,7 +205,14 @@ export default function AdminGallery() {
       fetchGallery();
       setShowDetailModal(false);
     } catch (error) {
-      alert('Failed to delete item');
+      console.error('Error deleting:', error);
+      if (error.response?.status === 401) {
+        localStorage.removeItem('adminToken');
+        localStorage.removeItem('token');
+        router.push('/');
+      } else {
+        alert('Failed to delete item');
+      }
     }
   };
 
@@ -158,89 +232,100 @@ export default function AdminGallery() {
     return `${days}d ago`;
   };
 
+  const handleCategoryChange = (category) => {
+    setSelectedCategory(category);
+    setCurrentPage(1);
+  };
+
+  const handleSearchChange = (query) => {
+    setSearchQuery(query);
+    setCurrentPage(1);
+  };
+
+  const handleStatusChange = (status) => {
+    setFilterStatus(status);
+    setCurrentPage(1);
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 flex">
-      {/* <AdminSidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} /> */}
-
       <div className="flex-1 overflow-auto">
-        {/* <AdminNavbar onMenuClick={() => setSidebarOpen(true)} user={user} /> */}
-
-        {/* Detail Modal */}
         {showDetailModal && selectedItem && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-            <div className="bg-white rounded-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-              <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between rounded-t-xl">
-                <h2 className="text-xl font-semibold text-gray-900">Gallery Item Details</h2>
-                <button onClick={() => setShowDetailModal(false)} className="p-2 hover:bg-gray-100 rounded-lg">
+          <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-2 sm:p-4">
+            <div className="bg-white rounded-lg sm:rounded-xl max-w-4xl w-full max-h-[95vh] sm:max-h-[90vh] overflow-hidden flex flex-col">
+              {/* Fixed Header */}
+              <div className="flex-shrink-0 bg-white border-b border-gray-200 px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between">
+                <h2 className="text-lg sm:text-xl font-semibold text-gray-900">Gallery Details</h2>
+                <button 
+                  onClick={() => setShowDetailModal(false)} 
+                  className="p-1.5 sm:p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                >
                   <X className="w-5 h-5" />
                 </button>
               </div>
 
-              <div className="p-6 space-y-6">
-                {/* Image */}
-                <div className="aspect-video bg-gray-200 rounded-lg overflow-hidden">
+              {/* Scrollable Content */}
+              <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4 sm:space-y-6">
+                {/* Image Container */}
+                <div className="w-full bg-gray-100 rounded-lg overflow-hidden">
                   <img
                     src={selectedItem.imageUrl}
                     alt={selectedItem.title}
-                    className="w-full h-full object-cover"
+                    className="w-full h-auto max-h-[50vh] object-contain"
                   />
                 </div>
 
-                {/* Status Badge */}
                 <div className="flex items-center gap-2">
                   {selectedItem.isApproved ? (
-                    <span className="flex items-center gap-1 px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm font-medium">
-                      <CheckCircle className="w-4 h-4" />
-                      Approved
+                    <span className="flex items-center gap-1 px-2 sm:px-3 py-1 bg-green-100 text-green-800 rounded-full text-xs sm:text-sm font-medium">
+                      <CheckCircle className="w-3 sm:w-4 h-3 sm:h-4" />
+                      <span className="hidden sm:inline">Approved</span>
                     </span>
                   ) : (
-                    <span className="flex items-center gap-1 px-3 py-1 bg-yellow-100 text-yellow-800 rounded-full text-sm font-medium">
-                      <XCircle className="w-4 h-4" />
-                      Pending Approval
+                    <span className="flex items-center gap-1 px-2 sm:px-3 py-1 bg-yellow-100 text-yellow-800 rounded-full text-xs sm:text-sm font-medium">
+                      <XCircle className="w-3 sm:w-4 h-3 sm:h-4" />
+                      <span className="hidden sm:inline">Pending</span>
                     </span>
                   )}
                 </div>
 
-                {/* Details */}
                 <div>
-                  <h3 className="text-2xl font-bold text-gray-900 mb-2">{selectedItem.title}</h3>
+                  <h3 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2">{selectedItem.title}</h3>
                   {selectedItem.description && (
-                    <p className="text-gray-700 mb-4">{selectedItem.description}</p>
+                    <p className="text-sm sm:text-base text-gray-700 mb-4">{selectedItem.description}</p>
                   )}
                 </div>
 
-                {/* Meta Information */}
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="flex items-center gap-2 text-sm text-gray-600">
-                    <Tag className="w-4 h-4" />
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                  <div className="flex items-center gap-2 text-xs sm:text-sm text-gray-600">
+                    <Tag className="w-4 h-4 flex-shrink-0" />
                     <span className="font-medium">Category:</span>
-                    <span>{selectedItem.category}</span>
+                    <span className="truncate">{selectedItem.category}</span>
                   </div>
 
                   {selectedItem.location && (
-                    <div className="flex items-center gap-2 text-sm text-gray-600">
-                      <MapPin className="w-4 h-4" />
+                    <div className="flex items-center gap-2 text-xs sm:text-sm text-gray-600">
+                      <MapPin className="w-4 h-4 flex-shrink-0" />
                       <span className="font-medium">Location:</span>
-                      <span>{selectedItem.location}</span>
+                      <span className="truncate">{selectedItem.location}</span>
                     </div>
                   )}
 
                   {selectedItem.eventDate && (
-                    <div className="flex items-center gap-2 text-sm text-gray-600">
-                      <Calendar className="w-4 h-4" />
-                      <span className="font-medium">Event Date:</span>
-                      <span>{new Date(selectedItem.eventDate).toLocaleDateString()}</span>
+                    <div className="flex items-center gap-2 text-xs sm:text-sm text-gray-600">
+                      <Calendar className="w-4 h-4 flex-shrink-0" />
+                      <span className="font-medium">Date:</span>
+                      <span className="truncate">{new Date(selectedItem.eventDate).toLocaleDateString()}</span>
                     </div>
                   )}
 
-                  <div className="flex items-center gap-2 text-sm text-gray-600">
-                    <User className="w-4 h-4" />
-                    <span className="font-medium">Uploaded by:</span>
-                    <span>{selectedItem.uploadedBy?.name || 'Unknown'}</span>
+                  <div className="flex items-center gap-2 text-xs sm:text-sm text-gray-600">
+                    <User className="w-4 h-4 flex-shrink-0" />
+                    <span className="font-medium">By:</span>
+                    <span className="truncate">{selectedItem.uploadedBy?.name || 'Unknown'}</span>
                   </div>
                 </div>
 
-                {/* Tags */}
                 {selectedItem.tags && selectedItem.tags.length > 0 && (
                   <div>
                     <p className="text-sm font-medium text-gray-700 mb-2">Tags:</p>
@@ -254,49 +339,48 @@ export default function AdminGallery() {
                   </div>
                 )}
 
-                {/* Stats */}
-                <div className="bg-gray-50 rounded-lg p-4">
-                  <div className="grid grid-cols-3 gap-4 text-center">
+                <div className="bg-gray-50 rounded-lg p-3 sm:p-4">
+                  <div className="grid grid-cols-3 gap-3 sm:gap-4 text-center">
                     <div>
-                      <p className="text-2xl font-bold text-gray-900">{selectedItem.likes?.length || 0}</p>
-                      <p className="text-sm text-gray-600">Likes</p>
+                      <p className="text-xl sm:text-2xl font-bold text-gray-900">{selectedItem.likes?.length || 0}</p>
+                      <p className="text-xs sm:text-sm text-gray-600">Likes</p>
                     </div>
                     <div>
-                      <p className="text-2xl font-bold text-gray-900">{selectedItem.comments?.length || 0}</p>
-                      <p className="text-sm text-gray-600">Comments</p>
+                      <p className="text-xl sm:text-2xl font-bold text-gray-900">{selectedItem.comments?.length || 0}</p>
+                      <p className="text-xs sm:text-sm text-gray-600">Comments</p>
                     </div>
                     <div>
-                      <p className="text-sm text-gray-600">Uploaded</p>
-                      <p className="text-sm font-medium text-gray-900">{getTimeAgo(selectedItem.createdAt)}</p>
+                      <p className="text-xs sm:text-sm text-gray-600">Uploaded</p>
+                      <p className="text-xs sm:text-sm font-medium text-gray-900">{getTimeAgo(selectedItem.createdAt)}</p>
                     </div>
                   </div>
                 </div>
 
                 {/* Action Buttons */}
-                <div className="flex gap-3 pt-4">
+                <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 pt-2">
                   {!selectedItem.isApproved ? (
                     <>
                       <button
                         onClick={() => handleApprove(selectedItem._id)}
-                        className="flex-1 flex items-center justify-center gap-2 px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700"
+                        className="flex-1 flex items-center justify-center gap-2 px-4 sm:px-6 py-2.5 sm:py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm sm:text-base font-medium"
                       >
-                        <CheckCircle className="w-5 h-5" />
+                        <CheckCircle className="w-4 sm:w-5 h-4 sm:h-5" />
                         <span>Approve</span>
                       </button>
                       <button
                         onClick={() => handleReject(selectedItem._id)}
-                        className="flex-1 flex items-center justify-center gap-2 px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700"
+                        className="flex-1 flex items-center justify-center gap-2 px-4 sm:px-6 py-2.5 sm:py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 text-sm sm:text-base font-medium"
                       >
-                        <XCircle className="w-5 h-5" />
-                        <span>Reject & Delete</span>
+                        <XCircle className="w-4 sm:w-5 h-4 sm:h-5" />
+                        <span>Reject</span>
                       </button>
                     </>
                   ) : (
                     <button
                       onClick={() => handleDelete(selectedItem._id)}
-                      className="flex-1 flex items-center justify-center gap-2 px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700"
+                      className="flex-1 flex items-center justify-center gap-2 px-4 sm:px-6 py-2.5 sm:py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 text-sm sm:text-base font-medium"
                     >
-                      <Trash2 className="w-5 h-5" />
+                      <Trash2 className="w-4 sm:w-5 h-4 sm:h-5" />
                       <span>Delete</span>
                     </button>
                   )}
@@ -306,35 +390,34 @@ export default function AdminGallery() {
           </div>
         )}
 
-        {/* Main Content */}
-        <div className="p-6">
+        <div className="p-3 sm:p-6">
           <div className="max-w-7xl mx-auto">
             {/* Header */}
-            <div className="mb-6">
-              <h1 className="text-2xl font-bold text-gray-900">Gallery Management</h1>
-              <p className="text-sm text-gray-600 mt-1">Manage and moderate gallery photos</p>
+            <div className="mb-4 sm:mb-6">
+              <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Gallery Management</h1>
+              <p className="text-xs sm:text-sm text-gray-600 mt-1">Manage and moderate gallery photos</p>
             </div>
 
             {/* Filters */}
-            <div className="bg-white rounded-lg border border-gray-200 p-4 mb-6">
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div className="bg-white rounded-lg border border-gray-200 p-3 sm:p-4 mb-4 sm:mb-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
                 {/* Search */}
-                <div className="md:col-span-2 relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <div className="sm:col-span-2 relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 sm:w-5 h-4 sm:h-5 text-gray-400" />
                   <input
                     type="text"
                     placeholder="Search photos..."
                     value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    onChange={(e) => handleSearchChange(e.target.value)}
+                    className="w-full pl-9 sm:pl-10 pr-4 py-2 text-sm sm:text-base border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
 
                 {/* Category Filter */}
                 <select
                   value={selectedCategory}
-                  onChange={(e) => setSelectedCategory(e.target.value)}
-                  className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  onChange={(e) => handleCategoryChange(e.target.value)}
+                  className="px-3 sm:px-4 py-2 text-sm sm:text-base border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
                   {categories.map((cat) => (
                     <option key={cat} value={cat}>{cat}</option>
@@ -344,8 +427,8 @@ export default function AdminGallery() {
                 {/* Status Filter */}
                 <select
                   value={filterStatus}
-                  onChange={(e) => setFilterStatus(e.target.value)}
-                  className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  onChange={(e) => handleStatusChange(e.target.value)}
+                  className="px-3 sm:px-4 py-2 text-sm sm:text-base border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
                   <option value="all">All Status</option>
                   <option value="approved">Approved</option>
@@ -354,23 +437,23 @@ export default function AdminGallery() {
               </div>
             </div>
 
-            {/* Gallery Grid */}
             {loading ? (
-              <div className="flex items-center justify-center p-12">
+              <div className="flex items-center justify-center p-8 sm:p-12">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
               </div>
             ) : items.length === 0 ? (
-              <div className="bg-white rounded-lg border border-gray-200 p-12 text-center">
-                <ImageIcon className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                <p className="text-gray-500">No gallery items found</p>
+              <div className="bg-white rounded-lg border border-gray-200 p-8 sm:p-12 text-center">
+                <ImageIcon className="w-12 sm:w-16 h-12 sm:h-16 text-gray-300 mx-auto mb-4" />
+                <p className="text-sm sm:text-base text-gray-500">No gallery items found</p>
               </div>
             ) : (
               <>
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
                   {items.map((item) => (
                     <div
                       key={item._id}
                       className="group relative aspect-square bg-gray-200 rounded-lg overflow-hidden cursor-pointer"
+                      onClick={() => openDetail(item)}
                     >
                       <img
                         src={item.imageUrl}
@@ -378,35 +461,30 @@ export default function AdminGallery() {
                         className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
                       />
                       
-                      {/* Status Badge */}
                       <div className="absolute top-2 right-2">
                         {item.isApproved ? (
-                          <span className="flex items-center gap-1 px-2 py-1 bg-green-500 text-white rounded-full text-xs">
+                          <span className="flex items-center gap-1 px-1.5 sm:px-2 py-1 bg-green-500 text-white rounded-full text-xs">
                             <CheckCircle className="w-3 h-3" />
                           </span>
                         ) : (
-                          <span className="flex items-center gap-1 px-2 py-1 bg-yellow-500 text-white rounded-full text-xs">
+                          <span className="flex items-center gap-1 px-1.5 sm:px-2 py-1 bg-yellow-500 text-white rounded-full text-xs">
                             <XCircle className="w-3 h-3" />
                           </span>
                         )}
                       </div>
 
-                      {/* Overlay */}
                       <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
-                        <div className="absolute bottom-0 left-0 right-0 p-4">
-                          <h3 className="text-white font-medium text-sm mb-2 line-clamp-2">
+                        <div className="absolute bottom-0 left-0 right-0 p-2 sm:p-4">
+                          <h3 className="text-white font-medium text-xs sm:text-sm mb-1 sm:mb-2 line-clamp-2">
                             {item.title}
                           </h3>
                           <div className="flex items-center justify-between">
-                            <span className="text-white text-xs">
+                            <span className="text-white text-xs truncate">
                               {item.uploadedBy?.name}
                             </span>
-                            <button
-                              onClick={() => openDetail(item)}
-                              className="p-2 bg-white/20 backdrop-blur-sm rounded-lg hover:bg-white/30 transition-colors"
-                            >
-                              <Eye className="w-4 h-4 text-white" />
-                            </button>
+                            <div className="p-1.5 sm:p-2 bg-white/20 backdrop-blur-sm rounded-lg flex-shrink-0">
+                              <Eye className="w-3 sm:w-4 h-3 sm:h-4 text-white" />
+                            </div>
                           </div>
                         </div>
                       </div>
@@ -414,35 +492,37 @@ export default function AdminGallery() {
                   ))}
                 </div>
 
-                {/* Pagination */}
                 {totalPages > 1 && (
-                  <div className="flex items-center justify-center gap-2 mt-8">
+                  <div className="flex flex-wrap items-center justify-center gap-2 mt-6 sm:mt-8">
                     <button
                       onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
                       disabled={currentPage === 1}
-                      className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="px-3 sm:px-4 py-2 text-sm sm:text-base border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      Previous
+                      Prev
                     </button>
                     
-                    {[...Array(Math.min(7, totalPages))].map((_, i) => (
-                      <button
-                        key={i}
-                        onClick={() => setCurrentPage(i + 1)}
-                        className={`w-10 h-10 rounded-lg ${
-                          currentPage === i + 1
-                            ? 'bg-blue-600 text-white'
-                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                        }`}
-                      >
-                        {i + 1}
-                      </button>
-                    ))}
+                    {[...Array(Math.min(5, totalPages))].map((_, i) => {
+                      const pageNum = i + 1;
+                      return (
+                        <button
+                          key={i}
+                          onClick={() => setCurrentPage(pageNum)}
+                          className={`w-8 sm:w-10 h-8 sm:h-10 text-sm sm:text-base rounded-lg ${
+                            currentPage === pageNum
+                              ? 'bg-blue-600 text-white'
+                              : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                          }`}
+                        >
+                          {pageNum}
+                        </button>
+                      );
+                    })}
 
                     <button
                       onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
                       disabled={currentPage === totalPages}
-                      className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="px-3 sm:px-4 py-2 text-sm sm:text-base border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       Next
                     </button>
