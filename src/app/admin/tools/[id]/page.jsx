@@ -1,13 +1,13 @@
 import React from 'react';
-import EventDetails from '@/app/components/events/EventDetails';
+import ToolDetailsPage from '@/app/components/Tools/ToolDetailsPage';
 
 
 const page = async ({ params }) => {
   const { id } = await params;
-  // console.log("Member ID from params:", id);
+//   console.log("Member ID from params:", id);
   return (
     <div>
-      <EventDetails id={id} />;
+      <ToolDetailsPage id={id} />;
     </div>
   )
 }
