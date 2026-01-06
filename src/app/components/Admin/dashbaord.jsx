@@ -55,11 +55,10 @@ export default function DashboardContent() {
       }
 
       const data = await response.json();
-      console.log('Dashboard Data:', data); // Debug log
+      console.log('Dashboard Data:', data);
       setStats(data.stats);
       setActivities(data.activities || []);
       setChartData(data.chartData || []);
-      console.log('Chart Data:', data.chartData); // Debug log
     } catch (error) {
       console.error('Dashboard error:', error);
     } finally {
@@ -82,11 +81,11 @@ export default function DashboardContent() {
     );
   }
 
-  // All module cards
+  // All module cards with their respective icons
   const moduleCards = [
     {
       title: 'Members',
-      icon: Users,
+      Icon: Users,
       color: 'bg-blue-500',
       total: stats.members?.total || 0,
       approved: stats.members?.approved || 0,
@@ -94,7 +93,7 @@ export default function DashboardContent() {
     },
     {
       title: 'Jobs',
-      icon: Briefcase,
+      Icon: Briefcase,
       color: 'bg-green-500',
       total: stats.jobs?.total || 0,
       approved: stats.jobs?.approved || 0,
@@ -102,7 +101,7 @@ export default function DashboardContent() {
     },
     {
       title: 'Blogs',
-      icon: FileText,
+      Icon: FileText,
       color: 'bg-purple-500',
       total: stats.blogs?.total || 0,
       approved: stats.blogs?.approved || 0,
@@ -110,7 +109,7 @@ export default function DashboardContent() {
     },
     {
       title: 'Events',
-      icon: Calendar,
+      Icon: Calendar,
       color: 'bg-red-500',
       total: stats.events?.total || 0,
       approved: stats.events?.approved || 0,
@@ -118,7 +117,7 @@ export default function DashboardContent() {
     },
     {
       title: 'Gallery',
-      icon: Image,
+      Icon: Image,
       color: 'bg-pink-500',
       total: stats.gallery?.total || 0,
       approved: stats.gallery?.approved || 0,
@@ -126,7 +125,7 @@ export default function DashboardContent() {
     },
     {
       title: 'Feedbacks',
-      icon: MessageCircle,
+      Icon: MessageCircle,
       color: 'bg-yellow-500',
       total: stats.feedback?.total || 0,
       approved: stats.feedback?.resolved || 0,
@@ -134,7 +133,7 @@ export default function DashboardContent() {
     },
     {
       title: 'Groups',
-      icon: UserPlus,
+      Icon: UserPlus,
       color: 'bg-indigo-500',
       total: stats.groups?.total || 0,
       approved: stats.groups?.approved || 0,
@@ -142,7 +141,7 @@ export default function DashboardContent() {
     },
     {
       title: 'Forums',
-      icon: MessageSquare,
+      Icon: MessageSquare,
       color: 'bg-teal-500',
       total: stats.forums?.total || 0,
       approved: stats.forums?.approved || 0,
@@ -150,7 +149,7 @@ export default function DashboardContent() {
     },
     {
       title: 'Seminars',
-      icon: GraduationCap,
+      Icon: GraduationCap,
       color: 'bg-orange-500',
       total: stats.seminars?.total || 0,
       approved: stats.seminars?.approved || 0,
@@ -158,7 +157,7 @@ export default function DashboardContent() {
     },
     {
       title: 'Tools',
-      icon: Wrench,
+      Icon: Wrench,
       color: 'bg-cyan-500',
       total: stats.tools?.total || 0,
       approved: stats.tools?.approved || 0,
@@ -169,19 +168,19 @@ export default function DashboardContent() {
   return (
     <div className="p-6 space-y-6">
       {/* ===== ALL MODULE STATS CARDS ===== */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4"> 
         {moduleCards.map((card, index) => {
-          const Icon = card.icon;
+          const IconComponent = card.Icon;
           return (
             <div
               key={index}
-              className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow"
+              className="bg-white rounded-lg shadow-md p-5 hover:shadow-lg transition-shadow border border-gray-100"
             >
               {/* Header with Icon */}
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-gray-700 text-lg font-semibold">{card.title}</h3>
-                <div className={`${card.color} p-3 rounded-lg`}>
-                  <Icon className="w-6 h-6 text-white" />
+                <h3 className="text-gray-700 text-base font-semibold">{card.title}</h3>
+                <div className={`${card.color} p-2.5 rounded-lg shadow-sm`}>
+                  <IconComponent className="w-5 h-5 text-white" />
                 </div>
               </div>
 
@@ -194,7 +193,7 @@ export default function DashboardContent() {
               </div>
 
               {/* Approved & Pending */}
-              <div className="space-y-2 pt-4 border-t border-gray-200">
+              <div className="space-y-2 pt-3 border-t border-gray-200">
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-gray-600">Approved:</span>
                   <span className="text-sm font-semibold text-green-600">
@@ -216,7 +215,7 @@ export default function DashboardContent() {
       {/* ===== GRAPH + ACTIVITY ===== */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* ===== GRAPH ===== */}
-        <div className="bg-white rounded-lg shadow-md p-6">
+        <div className="bg-white rounded-lg shadow-md p-6 border border-gray-100">
           <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
             <TrendingUp className="w-5 h-5 text-blue-600" />
             Members Growth (Last 30 Days)
@@ -266,18 +265,21 @@ export default function DashboardContent() {
         </div>
 
         {/* ===== ACTIVITY LOG ===== */}
-        <div className="bg-white rounded-lg shadow-md p-6">
+        <div className="bg-white rounded-lg shadow-md p-6 border border-gray-100">
           <h2 className="text-xl font-bold text-gray-900 mb-4">Activity Log</h2>
           {activities.length === 0 ? (
-            <div className="h-64 flex items-center justify-center text-gray-400">
-              No recent activity found.
+            <div className="h-64 flex items-center justify-center text-gray-400 border border-dashed border-gray-300 rounded">
+              <div className="text-center">
+                <MessageCircle className="w-12 h-12 text-gray-300 mx-auto mb-2" />
+                <p>No recent activity found</p>
+              </div>
             </div>
           ) : (
-            <div className="space-y-3 max-h-80 overflow-y-auto">
+            <div className="space-y-3 max-h-80 overflow-y-auto pr-2">
               {activities.map((activity, index) => (
                 <div
                   key={index}
-                  className="border-l-4 border-blue-500 pl-4 py-2 hover:bg-gray-50 transition-colors"
+                  className="border-l-4 border-blue-500 pl-4 py-2 hover:bg-gray-50 transition-colors rounded-r"
                 >
                   <h3 className="font-semibold text-gray-900">{activity.title}</h3>
                   <p className="text-xs text-gray-500 mt-1">
