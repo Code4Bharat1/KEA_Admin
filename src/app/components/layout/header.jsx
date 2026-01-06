@@ -38,7 +38,7 @@ export default function Header({ onMenuClick }) {
         headers: { Authorization: `Bearer ${token}` },
       });
       setNotifications(res.data);
-      
+
       // Get unread count
       const unreadRes = await axios.get(`${API_URL}/notifications/unread-count`, {
         headers: { Authorization: `Bearer ${token}` },
@@ -53,7 +53,7 @@ export default function Header({ onMenuClick }) {
 
   useEffect(() => {
     fetchNotifications();
-    
+
     // Poll for new notifications every 30 seconds
     const interval = setInterval(fetchNotifications, 30000);
     return () => clearInterval(interval);
@@ -74,9 +74,9 @@ export default function Header({ onMenuClick }) {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [showNotifications, showProfileMenu]);
 
-  const today = new Date().toLocaleDateString('en-US', { 
-    month: 'short', 
-    day: 'numeric' 
+  const today = new Date().toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric'
   });
 
   // Get initials from name
@@ -118,8 +118,8 @@ export default function Header({ onMenuClick }) {
           headers: { Authorization: `Bearer ${token}` },
         }
       );
-      
-      setNotifications(notifications.map(notif => 
+
+      setNotifications(notifications.map(notif =>
         notif._id === id ? { ...notif, read: true } : notif
       ));
       setUnreadCount(prev => Math.max(0, prev - 1));
@@ -138,7 +138,7 @@ export default function Header({ onMenuClick }) {
           headers: { Authorization: `Bearer ${token}` },
         }
       );
-      
+
       setNotifications(notifications.map(notif => ({ ...notif, read: true })));
       setUnreadCount(0);
     } catch (err) {
@@ -152,10 +152,10 @@ export default function Header({ onMenuClick }) {
       await axios.delete(`${API_URL}/notifications/${id}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      
+
       const deletedNotif = notifications.find(n => n._id === id);
       setNotifications(notifications.filter(notif => notif._id !== id));
-      
+
       if (!deletedNotif.read) {
         setUnreadCount(prev => Math.max(0, prev - 1));
       }
@@ -170,7 +170,7 @@ export default function Header({ onMenuClick }) {
       await axios.delete(`${API_URL}/notifications`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      
+
       setNotifications([]);
       setUnreadCount(0);
       setShowNotifications(false);
@@ -184,7 +184,7 @@ export default function Header({ onMenuClick }) {
     if (!notification.read) {
       markAsRead(notification._id);
     }
-    
+
     // Navigate to related page
     if (notification.relatedId) {
       const routes = {
@@ -193,7 +193,7 @@ export default function Header({ onMenuClick }) {
         blog: `/admin/blogs/${notification.relatedId}`,
         event: `/admin/events/${notification.relatedId}`,
       };
-      
+
       const route = routes[notification.type];
       if (route) {
         router.push(route);
@@ -203,7 +203,7 @@ export default function Header({ onMenuClick }) {
   };
 
   const getNotificationIcon = (type) => {
-    switch(type) {
+    switch (type) {
       case 'member':
         return <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
           <CheckCircle className="w-5 h-5 text-blue-600" />
@@ -229,22 +229,22 @@ export default function Header({ onMenuClick }) {
 
   const getTimeAgo = (date) => {
     const seconds = Math.floor((new Date() - new Date(date)) / 1000);
-    
+
     let interval = seconds / 31536000;
     if (interval > 1) return Math.floor(interval) + ' years ago';
-    
+
     interval = seconds / 2592000;
     if (interval > 1) return Math.floor(interval) + ' months ago';
-    
+
     interval = seconds / 86400;
     if (interval > 1) return Math.floor(interval) + ' days ago';
-    
+
     interval = seconds / 3600;
     if (interval > 1) return Math.floor(interval) + ' hours ago';
-    
+
     interval = seconds / 60;
     if (interval > 1) return Math.floor(interval) + ' minutes ago';
-    
+
     return 'Just now';
   };
 
@@ -276,10 +276,10 @@ export default function Header({ onMenuClick }) {
           <span className="text-xs md:text-sm text-blue-200 hidden sm:block">
             Today - {today}
           </span>
-          
+
           {/* Notifications */}
           <div className="relative notifications-container">
-            <button 
+            <button
               onClick={() => setShowNotifications(!showNotifications)}
               className="relative p-2 text-white hover:bg-white/10 rounded-lg transition-colors"
             >
@@ -336,9 +336,8 @@ export default function Header({ onMenuClick }) {
                     notifications.map((notification) => (
                       <div
                         key={notification._id}
-                        className={`p-4 border-b border-gray-100 hover:bg-gray-50 transition-colors cursor-pointer ${
-                          !notification.read ? 'bg-blue-50' : ''
-                        }`}
+                        className={`p-4 border-b border-gray-100 hover:bg-gray-50 transition-colors cursor-pointer ${!notification.read ? 'bg-blue-50' : ''
+                          }`}
                         onClick={() => handleNotificationClick(notification)}
                       >
                         <div className="flex gap-3">
@@ -403,7 +402,7 @@ export default function Header({ onMenuClick }) {
               </div>
             )}
           </div>
-          
+
           {/* Desktop Profile Menu */}
           <div className="hidden sm:block relative profile-menu-container">
             <button
@@ -438,7 +437,7 @@ export default function Header({ onMenuClick }) {
                     <User className="w-5 h-5 text-gray-500" />
                     <span className="font-medium">My Profile</span>
                   </button>
-                  
+
                   <button
                     onClick={handleSettingsClick}
                     className="w-full flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-gray-50 transition-colors"
@@ -461,14 +460,17 @@ export default function Header({ onMenuClick }) {
             )}
           </div>
 
+
           {/* Mobile Profile - Just Avatar */}
-          <button
-            onClick={() => setShowProfileMenu(!showProfileMenu)}
-            className="sm:hidden relative profile-menu-container"
-          >
-            <div className="w-8 h-8 bg-white/20 backdrop-blur rounded-full flex items-center justify-center text-white text-sm font-semibold border border-white/30">
-              {initials}
-            </div>
+          <div className="sm:hidden relative profile-menu-container">
+            <button
+              onClick={() => setShowProfileMenu(!showProfileMenu)}
+              className="relative"
+            >
+              <div className="w-8 h-8 bg-white/20 backdrop-blur rounded-full flex items-center justify-center text-white text-sm font-semibold border border-white/30">
+                {initials}
+              </div>
+            </button>
 
             {/* Mobile Profile Dropdown */}
             {showProfileMenu && (
@@ -488,7 +490,7 @@ export default function Header({ onMenuClick }) {
                     <User className="w-5 h-5 text-gray-500" />
                     <span className="font-medium">My Profile</span>
                   </button>
-                  
+
                   <button
                     onClick={handleSettingsClick}
                     className="w-full flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-gray-50 transition-colors"
@@ -509,7 +511,7 @@ export default function Header({ onMenuClick }) {
                 </div>
               </div>
             )}
-          </button>
+          </div>
         </div>
       </div>
     </header>

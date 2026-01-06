@@ -98,11 +98,11 @@ export default function Sidebar({ isOpen, onClose }) {
 
   const menuItems = [
     { icon: LayoutDashboard, label: 'Dashboard', badge: null, href: '/admin/dashboard' },
-    { icon: Users, label: 'Members', badge: pendingCounts.members, href: '/admin/members' },
-    { icon: CheckCircle, label: 'Approvals', badge: pendingCounts.total, href: '/admin/approvals' },
-    { icon: Briefcase, label: 'Jobs', badge: pendingCounts.jobs, href: '/admin/jobs' },
-    { icon: FileText, label: 'Blogs', badge: pendingCounts.blogs, href: '/admin/blogs' },
-    { icon: Calendar, label: 'Events', badge: pendingCounts.events, href: '/admin/events' },
+    { icon: Users, label: 'Members',  href: '/admin/members' },
+    { icon: CheckCircle, label: 'Approvals', href: '/admin/approvals' },
+    { icon: Briefcase, label: 'Jobs', href: '/admin/jobs' },
+    { icon: FileText, label: 'Blogs',  href: '/admin/blogs' },
+    { icon: Calendar, label: 'Events',  href: '/admin/events' },
     { icon: Image, label: 'Gallery / Good Wishes', badge: null, href: '/admin/gallery' },
     { icon: MessageSquare, label: 'Feedbacks', badge: null, href: '/admin/feedbacks' },
     { icon: UsersRound, label: 'Groups', badge: null, href: '/admin/group' },

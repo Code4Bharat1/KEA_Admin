@@ -67,17 +67,24 @@ export default function AdminProfile() {
     }
   };
 
-  const fetchAdminStats = async () => {
-    try {
-      const token = localStorage.getItem('adminToken');
-      const res = await axios.get(`${API_URL}/admin/stats`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      setStats(res.data);
-    } catch (err) {
-      console.error('Error fetching stats:', err);
-    }
-  };
+ const fetchAdminStats = async () => {
+  try {
+    const token = localStorage.getItem('adminToken');
+    const res = await axios.get(`${API_URL}/admin/stats`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+    setStats({
+      membersApproved: res.data.members?.approved || 0,
+      jobsApproved: res.data.jobs?.approved || 0,
+      blogsApproved: res.data.blogs?.approved || 0,
+      eventsApproved: res.data.events?.approved || 0,
+      totalReviews: res.data.feedback?.resolved || 0,
+    });
+  } catch (err) {
+    console.error('Error fetching stats:', err);
+  }
+};
 
   const handleInputChange = (e) => {
     setFormData({
