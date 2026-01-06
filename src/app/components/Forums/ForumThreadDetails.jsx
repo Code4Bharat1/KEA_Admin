@@ -23,17 +23,17 @@ export default function ForumThreadDetails() {
   useEffect(() => {
     fetchThread();
   }, [id]);
+const fetchThread = async () => {
+  try {
+    const { data } = await axios.get(`${API_URL}/forums/${id}`);
+    setThread(data); // ✅ correct
+  } catch (err) {
+    console.error(err);
+  } finally {
+    setLoading(false);
+  }
+};
 
-  const fetchThread = async () => {
-    try {
-      const { data } = await axios.get(`${API_URL}/forums/${id}`);
-      setThread(data.thread);
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   if (loading) {
     return (

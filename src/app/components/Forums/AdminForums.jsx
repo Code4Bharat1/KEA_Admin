@@ -538,7 +538,7 @@ export default function AdminForumsManagement() {
                       <td className="px-4 py-3">
                         <div className="flex items-center justify-end gap-1">
                           <button
-                            onClick={() => router.push(`/dashboard/forums/${thread._id}`)}
+                            onClick={() => router.push(`/admin/forums/${thread._id}`)}
                             className="p-1.5 text-gray-600 hover:bg-gray-100 rounded"
                             title="View thread"
                           >

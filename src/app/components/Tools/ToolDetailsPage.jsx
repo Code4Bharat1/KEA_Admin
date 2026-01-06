@@ -29,15 +29,16 @@ export default function ToolDetailsPage() {
   }, [id]);
 
   const fetchTool = async () => {
-    try {
-      const { data } = await axios.get(`${API_URL}/tools/${id}`);
-      setTool(data.tool);
-    } catch (error) {
-      console.error(error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  try {
+    const { data } = await axios.get(`${API_URL}/tools/${id}`);
+    setTool(data); // ✅ correct
+  } catch (error) {
+    console.error(error);
+  } finally {
+    setLoading(false);
+  }
+};
+
 
   if (loading) {
     return (
