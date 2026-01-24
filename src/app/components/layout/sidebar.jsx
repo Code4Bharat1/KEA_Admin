@@ -18,7 +18,8 @@ import {
   MessagesSquare,
   Presentation,
   Wrench,
-  X
+  X,
+  Library
 } from 'lucide-react';
 
 export default function Sidebar({ isOpen, onClose }) {
@@ -98,11 +99,12 @@ export default function Sidebar({ isOpen, onClose }) {
 
   const menuItems = [
     { icon: LayoutDashboard, label: 'Dashboard', badge: null, href: '/admin/dashboard' },
-    { icon: Users, label: 'Members',  href: '/admin/members' },
+    { icon: Users, label: 'Members', href: '/admin/members' },
     { icon: CheckCircle, label: 'Approvals', href: '/admin/approvals' },
     { icon: Briefcase, label: 'Jobs', href: '/admin/jobs' },
-    { icon: FileText, label: 'Blogs',  href: '/admin/blogs' },
-    { icon: Calendar, label: 'Events',  href: '/admin/events' },
+    { icon: FileText, label: 'Blogs', href: '/admin/blogs' },
+    { icon: Calendar, label: 'Events', href: '/admin/events' },
+    { icon: Library, label: 'Knowledge Hub', href: '/admin/knowledge' },
     { icon: Image, label: 'Gallery / Good Wishes', badge: null, href: '/admin/gallery' },
     { icon: MessageSquare, label: 'Feedbacks', badge: null, href: '/admin/feedbacks' },
     { icon: UsersRound, label: 'Groups', badge: null, href: '/admin/group' },
@@ -123,64 +125,64 @@ export default function Sidebar({ isOpen, onClose }) {
         />
       )}
 
-     <aside
-  className={`fixed top-0 left-0 z-[100] w-64 h-screen
+      <aside
+        className={`fixed top-0 left-0 z-[100] w-64 h-screen
   bg-linear-to-b from-[#0D2847] to-[#1a3a5c]
   transition-transform duration-300
   flex flex-col
   ${isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}
->
-  {/* Close button */}
-  <button
-    onClick={onClose}
-    className="lg:hidden absolute top-4 right-4 text-white"
-  >
-    <X />
-  </button>
+      >
+        {/* Close button */}
+        <button
+          onClick={onClose}
+          className="lg:hidden absolute top-4 right-4 text-white"
+        >
+          <X />
+        </button>
 
-  {/* ✅ LOGO – FIXED */}
-  <div className="p-6 border-b border-white/10 shrink-0">
-    <div className="flex items-center justify-center">
-      <img
-        src="/logo1.png"
-        alt="KEA Logo"
-        className="h-20 object-contain"
-      />
-    </div>
-  </div>
+        {/* ✅ LOGO – FIXED */}
+        <div className="p-6 border-b border-white/10 shrink-0">
+          <div className="flex items-center justify-center">
+            <img
+              src="/logo1.png"
+              alt="KEA Logo"
+              className="h-20 object-contain"
+            />
+          </div>
+        </div>
 
-  {/* ✅ NAV – SCROLLABLE */}
-  <nav className="flex-1 p-4 overflow-y-auto overscroll-contain">
-    <ul className="space-y-1">
-      {menuItems.map((item, i) => {
-        const Icon = item.icon;
-        const active = isActive(item.href);
+        {/* ✅ NAV – SCROLLABLE */}
+        <nav className="flex-1 p-4 overflow-y-auto overscroll-contain">
+          <ul className="space-y-1">
+            {menuItems.map((item, i) => {
+              const Icon = item.icon;
+              const active = isActive(item.href);
 
-        return (
-          <li key={i}>
-            <Link
-              href={item.href}
-              onClick={() => window.innerWidth < 1024 && onClose()}
-              className={`flex items-center justify-between px-3 py-2 rounded-lg transition
+              return (
+                <li key={i}>
+                  <Link
+                    href={item.href}
+                    onClick={() => window.innerWidth < 1024 && onClose()}
+                    className={`flex items-center justify-between px-3 py-2 rounded-lg transition
               ${active ? 'bg-white/10 text-white' : 'text-blue-100 hover:bg-white/5'}`}
-            >
-              <div className="flex items-center gap-3">
-                <Icon className="w-5 h-5" />
-                <span className="truncate">{item.label}</span>
-              </div>
+                  >
+                    <div className="flex items-center gap-3">
+                      <Icon className="w-5 h-5" />
+                      <span className="truncate">{item.label}</span>
+                    </div>
 
-              {item.badge > 0 && (
-                <span className="bg-red-500 text-xs px-2 rounded-full">
-                  {item.badge}
-                </span>
-              )}
-            </Link>
-          </li>
-        );
-      })}
-    </ul>
-  </nav>
-</aside>
+                    {item.badge > 0 && (
+                      <span className="bg-red-500 text-xs px-2 rounded-full">
+                        {item.badge}
+                      </span>
+                    )}
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
+        </nav>
+      </aside>
 
     </>
   );

@@ -278,8 +278,8 @@ export default function AdminSeminarsManagement() {
 
       {/* Create Modal */}
       {showCreateModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-xl max-w-3xl w-full max-h-[90vh] overflow-y-auto text-black">
             <div className="sticky top-0 bg-white border-b px-6 py-4 flex items-center justify-between">
               <h2 className="text-xl font-semibold">Create Seminar</h2>
               <button 
@@ -470,10 +470,10 @@ export default function AdminSeminarsManagement() {
       <div className="p-6">
         <div className="max-w-7xl mx-auto">
           {/* Filters */}
-          <div className="bg-white rounded-lg border p-4 mb-4">
-            <div className="flex gap-4">
+          <div className="bg-white rounded-lg border p-4 mb-4 ">
+            <div className="flex gap-4  text-black">
               <div className="flex-1 relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-black" />
                 <input 
                   value={searchQuery} 
                   onChange={(e) => setSearchQuery(e.target.value)} 

@@ -292,14 +292,14 @@ export default function SeminarDetailsPage() {
           </div>
 
           {/* Organizer */}
-          <div className="mt-6 border-t pt-4 text-sm space-y-1">
+          <div className="mt-6 border-t pt-4 text-sm space-y-1 text-black">
             <p><strong>Organizer:</strong> {seminar.organizer}</p>
             {seminar.speaker && <p><strong>Speaker:</strong> {seminar.speaker}</p>}
             {seminar.targetAudience && <p><strong>Target Audience:</strong> {seminar.targetAudience}</p>}
           </div>
 
           {/* Description */}
-          <div className="mt-6">
+          <div className="mt-6  text-black">
             <h2 className="text-lg font-semibold mb-2">Description</h2>
             <p className="text-gray-700 whitespace-pre-line">
               {seminar.description || '—'}

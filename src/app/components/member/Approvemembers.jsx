@@ -31,7 +31,7 @@ export default function Members() {
       });
 
       setMembers(response.data || []);
-      
+
       // Calculate stats
       const allMembers = response.data || [];
       setStats({
@@ -54,21 +54,21 @@ export default function Members() {
   };
 
   useEffect(() => {
-    fetchMembers();    
+    fetchMembers();
   }, []);
 
   // Filter members based on search, category, and status
   const filteredMembers = members.filter(member => {
-    const matchesSearch = 
+    const matchesSearch =
       member.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       member.email?.toLowerCase().includes(searchQuery.toLowerCase());
-    
-    const matchesCategory = 
-      categoryFilter === 'all' || 
+
+    const matchesCategory =
+      categoryFilter === 'all' ||
       member.category?.toLowerCase() === categoryFilter.toLowerCase();
-    
-    const matchesStatus = 
-      statusFilter === 'all' || 
+
+    const matchesStatus =
+      statusFilter === 'all' ||
       member.membershipStatus === statusFilter;
 
     return matchesSearch && matchesCategory && matchesStatus;
@@ -88,6 +88,18 @@ export default function Members() {
   useEffect(() => {
     setCurrentPage(1);
   }, [searchQuery, categoryFilter, statusFilter]);
+  const categories = [
+          "Software Engineering",
+          "Civil Engineering",
+          "Mechanical Engineering",
+          "Electrical Engineering",
+          "Electronics Engineering",
+          "Chemical Engineering",
+          "Computer Engineering",
+          "Architecture",
+          "Other",
+          ];
+
 
   if (loading) {
     return (
@@ -160,17 +172,21 @@ export default function Members() {
 
         {/* Filters */}
         <div className="flex flex-col sm:flex-row gap-3">
+          
           <select
             value={categoryFilter}
             onChange={(e) => setCategoryFilter(e.target.value)}
             className="px-4 py-2.5 bg-white border rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
             <option value="all">All categories</option>
-            <option value="software">Software Engineering</option>
-            <option value="civil">Civil Engineering</option>
-            <option value="electrical">Electrical Engineering</option>
-            <option value="mechanical">Mechanical Engineering</option>
+
+            {categories.map((cat) => (
+              <option key={cat} value={cat}>
+                {cat}
+              </option>
+            ))}
           </select>
+
 
           <select
             value={statusFilter}
@@ -251,20 +267,19 @@ export default function Members() {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{m.email}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                      {new Date(m.createdAt).toLocaleDateString('en-US', { 
-                        year: 'numeric', 
-                        month: 'short', 
-                        day: 'numeric' 
+                      {new Date(m.createdAt).toLocaleDateString('en-US', {
+                        year: 'numeric',
+                        month: 'short',
+                        day: 'numeric'
                       })}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`px-2 py-1 rounded text-xs font-semibold ${
-                        m.membershipStatus === 'pending'
+                      <span className={`px-2 py-1 rounded text-xs font-semibold ${m.membershipStatus === 'pending'
                           ? 'bg-yellow-100 text-yellow-800'
                           : m.membershipStatus === 'active'
-                          ? 'bg-green-100 text-green-800'
-                          : 'bg-gray-100 text-gray-800'
-                      }`}>
+                            ? 'bg-green-100 text-green-800'
+                            : 'bg-gray-100 text-gray-800'
+                        }`}>
                         {m.membershipStatus}
                       </span>
                     </td>
@@ -274,7 +289,7 @@ export default function Members() {
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right">
-                      <Link 
+                      <Link
                         href={`/admin/members/${m._id}`}
                         className="inline-flex items-center px-3 py-1.5 text-sm font-medium text-blue-600 bg-blue-50 rounded-lg hover:bg-blue-100"
                       >
@@ -303,13 +318,12 @@ export default function Members() {
                     <p className="text-sm text-gray-600">{m.category || "Not specified"}</p>
                   </div>
 
-                  <span className={`px-2 py-1 rounded text-xs font-semibold ${
-                    m.membershipStatus === 'pending'
+                  <span className={`px-2 py-1 rounded text-xs font-semibold ${m.membershipStatus === 'pending'
                       ? 'bg-yellow-100 text-yellow-800'
                       : m.membershipStatus === 'active'
-                      ? 'bg-green-100 text-green-800'
-                      : 'bg-gray-100 text-gray-800'
-                  }`}>
+                        ? 'bg-green-100 text-green-800'
+                        : 'bg-gray-100 text-gray-800'
+                    }`}>
                     {m.membershipStatus}
                   </span>
                 </div>
@@ -320,7 +334,7 @@ export default function Members() {
                   <p><span className="font-medium">Role:</span> {m.role}</p>
                 </div>
 
-                <Link 
+                <Link
                   href={`/admin/members/${m._id}`}
                   className="inline-flex items-center px-3 py-1.5 text-sm font-medium text-blue-600 bg-blue-50 rounded-lg hover:bg-blue-100"
                 >
@@ -338,7 +352,7 @@ export default function Members() {
               <div className="text-sm text-gray-600">
                 Showing {indexOfFirstItem + 1} to {Math.min(indexOfLastItem, filteredMembers.length)} of {filteredMembers.length} members
               </div>
-              
+
               <div className="flex gap-2">
                 <button
                   onClick={() => handlePageChange(currentPage - 1)}
@@ -347,40 +361,38 @@ export default function Members() {
                 >
                   Previous
                 </button>
-                
+
                 {[...Array(Math.min(5, totalPages))].map((_, i) => {
                   const pageNum = i + 1;
                   return (
                     <button
                       key={pageNum}
                       onClick={() => handlePageChange(pageNum)}
-                      className={`w-8 h-8 rounded ${
-                        currentPage === pageNum
+                      className={`w-8 h-8 rounded ${currentPage === pageNum
                           ? 'bg-blue-600 text-white'
                           : 'border hover:bg-white text-gray-700'
-                      }`}
+                        }`}
                     >
                       {pageNum}
                     </button>
                   );
                 })}
-                
+
                 {totalPages > 5 && (
                   <>
                     <span className="px-2 py-1">...</span>
                     <button
                       onClick={() => handlePageChange(totalPages)}
-                      className={`w-8 h-8 rounded ${
-                        currentPage === totalPages
+                      className={`w-8 h-8 rounded ${currentPage === totalPages
                           ? 'bg-blue-600 text-white'
                           : 'border hover:bg-white text-gray-700'
-                      }`}
+                        }`}
                     >
                       {totalPages}
                     </button>
                   </>
                 )}
-                
+
                 <button
                   onClick={() => handlePageChange(currentPage + 1)}
                   disabled={currentPage === totalPages}
