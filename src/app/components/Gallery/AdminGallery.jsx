@@ -251,7 +251,7 @@ export default function AdminGallery() {
     <div className="min-h-screen bg-gray-50 flex">
       <div className="flex-1 overflow-auto">
         {showDetailModal && selectedItem && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-2 sm:p-4">
+          <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-2 sm:p-4">
             <div className="bg-white rounded-lg sm:rounded-xl max-w-4xl w-full max-h-[95vh] sm:max-h-[90vh] overflow-hidden flex flex-col">
               {/* Fixed Header */}
               <div className="flex-shrink-0 bg-white border-b border-gray-200 px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between">
@@ -399,7 +399,7 @@ export default function AdminGallery() {
             </div>
 
             {/* Filters */}
-            <div className="bg-white rounded-lg border border-gray-200 p-3 sm:p-4 mb-4 sm:mb-6">
+            <div className="bg-white rounded-lg border text-black border-gray-200 p-3 sm:p-4 mb-4 sm:mb-6">
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
                 {/* Search */}
                 <div className="sm:col-span-2 relative">

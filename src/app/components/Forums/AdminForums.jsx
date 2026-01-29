@@ -377,7 +377,7 @@ export default function AdminForumsManagement() {
       <div className="p-6">
         <div className="max-w-7xl mx-auto">
           {/* Filters and Actions */}
-          <div className="bg-white rounded-lg border border-gray-200 p-4 mb-4">
+          <div className="bg-white text-black rounded-lg border border-gray-200 p-4 mb-4">
             <div className="flex flex-col lg:flex-row gap-4">
               {/* Search */}
               <div className="flex-1 relative">

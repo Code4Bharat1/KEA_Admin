@@ -174,7 +174,7 @@ export default function AdminGroupsPage() {
     <div className="p-6 max-w-7xl mx-auto">
       {/* Header */}
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900 mb-2">Groups Management</h1>
+        <h1 className="text-2xl font-bold text-white text-gray-900 mb-2">Groups Management</h1>
         <p className="text-gray-600">Review, approve, and manage community groups</p>
       </div>
 
@@ -224,7 +224,7 @@ export default function AdminGroupsPage() {
       </div>
 
       {/* Filters */}
-      <div className="bg-white rounded-lg border border-gray-200 p-4 mb-6">
+      <div className="bg-white rounded-lg border text-black border-gray-200 p-4 mb-6">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
@@ -404,7 +404,7 @@ export default function AdminGroupsPage() {
 
       {/* Detail Modal */}
       {showDetailModal && selectedGroup && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
             <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between rounded-t-xl">
               <h2 className="text-xl font-semibold text-gray-900">Group Details</h2>

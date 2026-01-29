@@ -141,12 +141,12 @@ export default function Sidebar({ isOpen, onClose }) {
         </button>
 
         {/* ✅ LOGO – FIXED */}
-        <div className="p-6 border-b border-white/10 shrink-0">
+        <div className="p-3 border-b border-white/10 shrink-0">
           <div className="flex items-center justify-center">
             <img
               src="/logo1.png"
               alt="KEA Logo"
-              className="h-20 object-contain"
+              className="h-26 object-contain"
             />
           </div>
         </div>

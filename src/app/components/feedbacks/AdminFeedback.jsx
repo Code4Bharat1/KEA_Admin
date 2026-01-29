@@ -339,7 +339,7 @@ export default function AdminFeedback() {
             </div>
 
             {/* Filters */}
-            <div className="bg-white rounded-lg border border-gray-200 p-4 mb-6">
+            <div className="bg-white rounded-lg border text-black border-gray-200 p-4 mb-6">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 {/* Status Filter */}
                 <select
