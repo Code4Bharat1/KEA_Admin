@@ -17,7 +17,9 @@ import {
   Filter,
   MoreVertical,
   X,
-  Check
+  Check,
+  CheckCircle,
+  XCircle
 } from 'lucide-react';
 import axios from 'axios';
 import { useRouter } from 'next/navigation';
@@ -29,13 +31,16 @@ export default function AdminForumsManagement() {
   const [categories, setCategories] = useState([]);
   const [stats, setStats] = useState({
     total: 0,
+    pending: 0,
+    approved: 0,
+    rejected: 0,
     pinned: 0,
     locked: 0,
-    reported: 0
+    // reported: 0 
   });
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
-  const [filterStatus, setFilterStatus] = useState('all'); // all, pinned, locked, reported
+  const [filterStatus, setFilterStatus] = useState('all'); // all, pending, approved, rejected, pinned, locked
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [selectedThreads, setSelectedThreads] = useState([]);
@@ -60,6 +65,9 @@ export default function AdminForumsManagement() {
       }
       if (searchQuery) {
         params.append('search', searchQuery);
+      }
+      if (filterStatus !== 'all') {
+        params.append('status', filterStatus);
       }
       params.append('page', currentPage);
       params.append('limit', 20);
@@ -95,11 +103,19 @@ export default function AdminForumsManagement() {
     try {
       const { data } = await axios.get(`${API_URL}/forums?limit=1000`);
       const allThreads = data.threads || [];
+      
+      const pendingCount = allThreads.filter(t => t.status === 'pending').length;
+      const approvedCount = allThreads.filter(t => t.status === 'approved').length;
+      const rejectedCount = allThreads.filter(t => t.status === 'rejected').length;
+      
       setStats({
         total: allThreads.length,
+        pending: pendingCount,
+        approved: approvedCount,
+        rejected: rejectedCount,
         pinned: allThreads.filter(t => t.isPinned).length,
         locked: allThreads.filter(t => t.isLocked).length,
-        reported: 0 // Placeholder for future reporting feature
+        // reported: 0 // Placeholder for future reporting feature
       });
     } catch (error) {
       console.error('Error fetching stats:', error);
@@ -143,6 +159,24 @@ export default function AdminForumsManagement() {
             })
           )
         );
+      } else if (action === 'approve') {
+        await Promise.all(
+          selectedThreads.map(id => 
+            axios.patch(`${API_URL}/forums/${id}/approve`, {}, {
+              headers: { Authorization: `Bearer ${token}` }
+            })
+          )
+        );
+        alert('Threads approved successfully');
+      } else if (action === 'reject') {
+        await Promise.all(
+          selectedThreads.map(id => 
+            axios.patch(`${API_URL}/forums/${id}/reject`, {}, {
+              headers: { Authorization: `Bearer ${token}` }
+            })
+          )
+        );
+        alert('Threads rejected successfully');
       }
       
       setSelectedThreads([]);
@@ -198,6 +232,42 @@ export default function AdminForumsManagement() {
     }
   };
 
+  const handleApproveThread = async (threadId) => {
+    try {
+      const token = localStorage.getItem('userToken');
+      await axios.patch(`${API_URL}/forums/${threadId}/approve`, {}, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      fetchThreads();
+      fetchStats();
+      alert('Thread approved successfully');
+    } catch (error) {
+      alert(error.response?.data?.message || 'Failed to approve thread');
+    }
+  };
+
+  const handleRejectThread = async (threadId) => {
+    const reason = prompt('Please enter rejection reason:');
+    if (!reason) {
+      alert('Rejection reason is required');
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem('userToken');
+      await axios.patch(`${API_URL}/forums/${threadId}/reject`, {
+        rejectionReason: reason
+      }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      fetchThreads();
+      fetchStats();
+      alert('Thread rejected successfully');
+    } catch (error) {
+      alert(error.response?.data?.message || 'Failed to reject thread');
+    }
+  };
+
   const handleEditThread = async (e) => {
     e.preventDefault();
     try {
@@ -247,6 +317,19 @@ export default function AdminForumsManagement() {
     return `${days}d ago`;
   };
 
+  const getStatusBadge = (status) => {
+    switch(status) {
+      case 'pending':
+        return <span className="px-2 py-1 bg-yellow-100 text-yellow-700 rounded text-xs">Pending</span>;
+      case 'approved':
+        return <span className="px-2 py-1 bg-green-100 text-green-700 rounded text-xs">Approved</span>;
+      case 'rejected':
+        return <span className="px-2 py-1 bg-red-100 text-red-700 rounded text-xs">Rejected</span>;
+      default:
+        return <span className="px-2 py-1 bg-gray-100 text-gray-700 rounded text-xs">Draft</span>;
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
@@ -266,8 +349,8 @@ export default function AdminForumsManagement() {
             </button>
           </div>
 
-          {/* Stats Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          {/* Stats Cards - Updated with Approval Stats */}
+          <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
             <div className="bg-blue-50 rounded-lg p-4">
               <div className="flex items-center justify-between">
                 <div>
@@ -275,6 +358,33 @@ export default function AdminForumsManagement() {
                   <p className="text-2xl font-bold text-blue-900 mt-1">{stats.total}</p>
                 </div>
                 <MessageSquare className="w-8 h-8 text-blue-600" />
+              </div>
+            </div>
+            <div className="bg-yellow-50 rounded-lg p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-yellow-600 font-medium">Pending</p>
+                  <p className="text-2xl font-bold text-yellow-900 mt-1">{stats.pending}</p>
+                </div>
+                <AlertTriangle className="w-8 h-8 text-yellow-600" />
+              </div>
+            </div>
+            <div className="bg-green-50 rounded-lg p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-green-600 font-medium">Approved</p>
+                  <p className="text-2xl font-bold text-green-900 mt-1">{stats.approved}</p>
+                </div>
+                <CheckCircle className="w-8 h-8 text-green-600" />
+              </div>
+            </div>
+            <div className="bg-red-50 rounded-lg p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-red-600 font-medium">Rejected</p>
+                  <p className="text-2xl font-bold text-red-900 mt-1">{stats.rejected}</p>
+                </div>
+                <XCircle className="w-8 h-8 text-red-600" />
               </div>
             </div>
             <div className="bg-purple-50 rounded-lg p-4">
@@ -295,22 +405,13 @@ export default function AdminForumsManagement() {
                 <Lock className="w-8 h-8 text-orange-600" />
               </div>
             </div>
-            <div className="bg-red-50 rounded-lg p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-red-600 font-medium">Reported</p>
-                  <p className="text-2xl font-bold text-red-900 mt-1">{stats.reported}</p>
-                </div>
-                <AlertTriangle className="w-8 h-8 text-red-600" />
-              </div>
-            </div>
           </div>
         </div>
       </div>
 
-      {/* Edit Thread Modal */}
+      {/* Edit Thread Modal - Same as before */}
       {showEditModal && editingThread && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 bg-black/50 text-black z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
             <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
               <h2 className="text-xl font-semibold text-gray-900">Edit Thread</h2>
@@ -403,22 +504,37 @@ export default function AdminForumsManagement() {
                 ))}
               </select>
 
-              {/* Status Filter */}
+              {/* Status Filter - Updated with Approval Statuses */}
               <select
                 value={filterStatus}
                 onChange={(e) => setFilterStatus(e.target.value)}
                 className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 <option value="all">All Status</option>
-                <option value="pinned">Pinned Only</option>
-                <option value="locked">Locked Only</option>
+                <option value="pending">Pending</option>
+                <option value="approved">Approved</option>
+                <option value="rejected">Rejected</option>
+                <option value="pinned">Pinned</option>
+                <option value="locked">Locked</option>
               </select>
             </div>
 
-            {/* Bulk Actions */}
+            {/* Bulk Actions - Updated with Approve/Reject */}
             {selectedThreads.length > 0 && (
               <div className="flex items-center gap-2 mt-4 pt-4 border-t border-gray-200">
                 <span className="text-sm text-gray-600">{selectedThreads.length} selected</span>
+                <button
+                  onClick={() => handleBulkAction('approve')}
+                  className="px-3 py-1.5 bg-green-100 text-green-700 rounded-lg hover:bg-green-200 text-sm font-medium"
+                >
+                  Approve
+                </button>
+                <button
+                  onClick={() => handleBulkAction('reject')}
+                  className="px-3 py-1.5 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 text-sm font-medium"
+                >
+                  Reject
+                </button>
                 <button
                   onClick={() => handleBulkAction('pin')}
                   className="px-3 py-1.5 bg-purple-100 text-purple-700 rounded-lg hover:bg-purple-200 text-sm font-medium"
@@ -447,7 +563,7 @@ export default function AdminForumsManagement() {
             )}
           </div>
 
-          {/* Threads Table */}
+          {/* Threads Table - Updated with Status Column */}
           <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
             <table className="w-full">
               <thead className="bg-gray-50 border-b border-gray-200">
@@ -463,9 +579,9 @@ export default function AdminForumsManagement() {
                   <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Thread</th>
                   <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Category</th>
                   <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Author</th>
+                  <th className="px-4 py-3 text-center text-xs font-semibold text-gray-600 uppercase">Status</th>
                   <th className="px-4 py-3 text-center text-xs font-semibold text-gray-600 uppercase">Replies</th>
                   <th className="px-4 py-3 text-center text-xs font-semibold text-gray-600 uppercase">Views</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Status</th>
                   <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Last Activity</th>
                   <th className="px-4 py-3 text-right text-xs font-semibold text-gray-600 uppercase">Actions</th>
                 </tr>
@@ -473,7 +589,7 @@ export default function AdminForumsManagement() {
               <tbody className="divide-y divide-gray-200">
                 {loading ? (
                   <tr>
-                    <td colSpan="9" className="px-4 py-12 text-center">
+                    <td colSpan="10" className="px-4 py-12 text-center">
                       <div className="flex items-center justify-center">
                         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
                       </div>
@@ -481,7 +597,7 @@ export default function AdminForumsManagement() {
                   </tr>
                 ) : threads.length === 0 ? (
                   <tr>
-                    <td colSpan="9" className="px-4 py-12 text-center text-gray-500">
+                    <td colSpan="10" className="px-4 py-12 text-center text-gray-500">
                       No threads found
                     </td>
                   </tr>
@@ -517,26 +633,22 @@ export default function AdminForumsManagement() {
                         <span className="text-sm text-gray-700">{thread.author?.name}</span>
                       </td>
                       <td className="px-4 py-3 text-center">
+                        <div className="flex justify-center">
+                          {getStatusBadge(thread.status || 'pending')}
+                        </div>
+                      </td>
+                      <td className="px-4 py-3 text-center">
                         <span className="text-sm text-gray-900 font-medium">{thread.replies?.length || 0}</span>
                       </td>
                       <td className="px-4 py-3 text-center">
                         <span className="text-sm text-gray-900 font-medium">{thread.views || 0}</span>
                       </td>
                       <td className="px-4 py-3">
-                        <div className="flex gap-1">
-                          {thread.isPinned && (
-                            <span className="px-2 py-1 bg-purple-100 text-purple-700 rounded text-xs">Pinned</span>
-                          )}
-                          {thread.isLocked && (
-                            <span className="px-2 py-1 bg-orange-100 text-orange-700 rounded text-xs">Locked</span>
-                          )}
-                        </div>
-                      </td>
-                      <td className="px-4 py-3">
                         <span className="text-sm text-gray-600">{getTimeAgo(thread.lastActivity || thread.createdAt)}</span>
                       </td>
                       <td className="px-4 py-3">
                         <div className="flex items-center justify-end gap-1">
+                          {/* View Button */}
                           <button
                             onClick={() => router.push(`/admin/forums/${thread._id}`)}
                             className="p-1.5 text-gray-600 hover:bg-gray-100 rounded"
@@ -544,6 +656,8 @@ export default function AdminForumsManagement() {
                           >
                             <Eye className="w-4 h-4" />
                           </button>
+                          
+                          {/* Edit Button */}
                           <button
                             onClick={() => {
                               setEditingThread(thread);
@@ -554,6 +668,30 @@ export default function AdminForumsManagement() {
                           >
                             <Edit className="w-4 h-4" />
                           </button>
+                          
+                          {/* Approve Button */}
+                          {thread.status !== 'approved' && (
+                            <button
+                              onClick={() => handleApproveThread(thread._id)}
+                              className="p-1.5 text-green-600 hover:bg-green-50 rounded"
+                              title="Approve thread"
+                            >
+                              <CheckCircle className="w-4 h-4" />
+                            </button>
+                          )}
+                          
+                          {/* Reject Button */}
+                          {thread.status !== 'rejected' && (
+                            <button
+                              onClick={() => handleRejectThread(thread._id)}
+                              className="p-1.5 text-red-600 hover:bg-red-50 rounded"
+                              title="Reject thread"
+                            >
+                              <XCircle className="w-4 h-4" />
+                            </button>
+                          )}
+                          
+                          {/* Pin Button */}
                           <button
                             onClick={() => handleTogglePin(thread._id)}
                             className={`p-1.5 rounded ${
@@ -563,6 +701,8 @@ export default function AdminForumsManagement() {
                           >
                             <Pin className="w-4 h-4" />
                           </button>
+                          
+                          {/* Lock Button */}
                           <button
                             onClick={() => handleToggleLock(thread._id)}
                             className={`p-1.5 rounded ${
@@ -572,6 +712,8 @@ export default function AdminForumsManagement() {
                           >
                             <Lock className="w-4 h-4" />
                           </button>
+                          
+                          {/* Delete Button */}
                           <button
                             onClick={() => handleDeleteThread(thread._id)}
                             className="p-1.5 text-red-600 hover:bg-red-50 rounded"
