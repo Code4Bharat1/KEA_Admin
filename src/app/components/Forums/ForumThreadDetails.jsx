@@ -24,8 +24,15 @@ export default function ForumThreadDetails() {
     fetchThread();
   }, [id]);
 const fetchThread = async () => {
+  const token = localStorage.getItem("adminToken");
   try {
-    const { data } = await axios.get(`${API_URL}/forums/${id}`);
+    const { data } = await axios.get(`${API_URL}/forums/${id}`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      }
+    );
     setThread(data); // ✅ correct
   } catch (err) {
     console.error(err);
